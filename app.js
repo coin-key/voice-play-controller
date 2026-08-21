@@ -185,7 +185,12 @@ function chooseNextIndex(currentIndex) {
   if (mode === 'loop') {
     const range = getLoopRange();
     if (!range) return currentIndex + 1 < state.tracks.length ? currentIndex + 1 : -1;
-    if (currentIndex < range.start) return state.settings.randomWithinLoop ? chooseLoopIndex() : range.start;
+    // ループ区間へ入る前は通常の再生順を維持する。
+    // これにより [1 -> 2 -> (3 -> 4 -> 5) -> ...] のように、
+    // 区間開始前の曲を飛ばさず再生できる。
+    if (currentIndex < range.start) {
+      return currentIndex + 1 < state.tracks.length ? currentIndex + 1 : -1;
+    }
     if (currentIndex >= range.start && currentIndex <= range.end) {
       if (state.settings.randomWithinLoop) return chooseLoopIndex();
       return currentIndex < range.end ? currentIndex + 1 : range.start;
@@ -283,7 +288,6 @@ function renderTracks() {
 function updateTrackButtons() {
   const index = state.tracks.findIndex(t => t.id === state.selectedTrackId);
   $('removeTrackBtn').disabled = index < 0;
-  $('duplicateTrackBtn').disabled = index < 0;
   $('moveUpBtn').disabled = index <= 0;
   $('moveDownBtn').disabled = index < 0 || index >= state.tracks.length - 1;
 }
@@ -582,60 +586,6 @@ function reorderTrack(fromId, toId) {
   normalizeLoopSettings();
   renderTracks();
   setStatus('曲順を変更しました');
-}
-
-function duplicateSelectedTrack() {
-  const index = state.tracks.findIndex(t => t.id === state.selectedTrackId);
-  if (index < 0) return;
-
-  const source = state.tracks[index];
-  const duplicate = {
-    id: crypto.randomUUID(),
-    assetId: source.assetId,
-    trim: {
-      start: Number.isFinite(source.trim?.start) ? source.trim.start : 0,
-      end: source.trim?.end == null ? null : source.trim.end
-    },
-    weight: Number.isFinite(Number(source.weight)) && Number(source.weight) >= 0 ? Number(source.weight) : 1
-  };
-
-  const insertIndex = index + 1;
-  state.tracks.splice(insertIndex, 0, duplicate);
-
-  // ループ区間は曲位置を基準に保持しているため、挿入位置に応じて境界を補正する。
-  if (state.settings.loopStart != null && state.settings.loopEnd != null) {
-    if (insertIndex <= state.settings.loopStart) {
-      state.settings.loopStart += 1;
-      state.settings.loopEnd += 1;
-    } else if (insertIndex <= state.settings.loopEnd) {
-      state.settings.loopEnd += 1;
-    }
-  }
-
-  state.selectedTrackId = duplicate.id;
-  state.nextPreloadTrackId = null;
-  state.nextPreloadAssetId = null;
-  state.playlist.updatedAt = new Date().toISOString();
-  renderTracks();
-
-  // 同じアセットなので音声データ自体は再読み込みせず、複製先のtrimだけ反映する。
-  if (state.audioLoadedAssetId === duplicate.assetId && audioPlayer.readyState >= HTMLMediaElement.HAVE_METADATA) {
-    state.audioLoadedTrackId = duplicate.id;
-    const duration = Number.isFinite(audioPlayer.duration) ? audioPlayer.duration : 0;
-    if (duplicate.trim.end == null || duplicate.trim.end > duration) duplicate.trim.end = roundTime(duration);
-    duplicate.trim.start = clampTime(roundTime(duplicate.trim.start), duration);
-    duplicate.trim.end = clampTime(roundTime(duplicate.trim.end), duration);
-    if (duplicate.trim.end < duplicate.trim.start) duplicate.trim.end = duplicate.trim.start;
-    audioPlayer.pause();
-    audioPlayer.currentTime = duplicate.trim.start;
-    updatePlayerTimeUI();
-    updateTrimUI();
-    updateEditingControls(true);
-    prepareNextTrack();
-  } else {
-    loadSelectedTrack();
-  }
-  setStatus('選択曲を複製しました。');
 }
 
 function moveSelected(delta) {
@@ -1002,7 +952,6 @@ fileInput.addEventListener('change', async e => {
 });
 
 $('removeTrackBtn').addEventListener('click', removeSelectedTrack);
-$('duplicateTrackBtn').addEventListener('click', duplicateSelectedTrack);
 $('moveUpBtn').addEventListener('click', () => moveSelected(-1));
 $('moveDownBtn').addEventListener('click', () => moveSelected(1));
 
