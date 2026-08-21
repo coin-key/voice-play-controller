@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Audio Playlist</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <h1>Audio Playlist</h1>
+
+    <section class="panel">
+      <h2>プレイリスト</h2>
+      <div class="toolbar wrap">
+        <input id="fileInput" type="file" accept="audio/mpeg,audio/wav,audio/x-wav,audio/aac,audio/mp4,audio/x-m4a,.mp3,.wav,.aac,.m4a" multiple hidden>
+        <button id="addFilesBtn">音声ファイル追加</button>
+        <button id="removeTrackBtn" disabled>選択曲を削除</button>
+        <button id="moveUpBtn" disabled>↑</button>
+        <button id="moveDownBtn" disabled>↓</button>
+      </div>
+
+      <ol id="trackList" class="track-list" aria-label="プレイリスト"></ol>
+      <p id="trackEmpty" class="muted">音声ファイルを追加してください。</p>
+    </section>
+
+    <section class="panel">
+      <h2>再生</h2>
+      <div id="nowPlaying" class="now-playing">選択されていません</div>
+
+      <audio id="audioPlayer" preload="auto"></audio>
+
+      <div class="time-grid">
+        <label>再生位置
+          <input id="positionInput" type="number" min="0" step="0.05" value="0">
+        </label>
+        <span class="unit">秒</span>
+        <label>長さ
+          <output id="durationOutput">0.00</output>
+        </label>
+        <span class="unit">秒</span>
+      </div>
+
+      <input id="seekRange" type="range" min="0" max="0" value="0" step="0.05">
+
+      <div class="toolbar wrap">
+        <button id="playBtn" disabled>再生</button>
+        <button id="pauseBtn" disabled>一時停止</button>
+        <button id="stopBtn" disabled>停止</button>
+        <button id="previewTrimBtn" disabled>範囲試聴</button>
+        <button id="stopPreviewBtn" disabled>試聴停止</button>
+      </div>
+
+      <div class="volume-row">
+        <label for="volumeRange">音量</label>
+        <input id="volumeRange" type="range" min="0" max="1" step="0.01" value="1">
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>選択曲のトリミング設定</h2>
+      <p class="muted">音声データ自体は変更せず、開始・終了位置だけをプレイリストに保存します。</p>
+      <div class="time-grid">
+        <label>開始
+          <input id="trimStartInput" type="number" min="0" step="0.05" value="0">
+        </label>
+        <span class="unit">秒</span>
+        <label>終了
+          <input id="trimEndInput" type="number" min="0" step="0.05" value="0">
+        </label>
+        <span class="unit">秒</span>
+      </div>
+      <div class="toolbar wrap">
+        <button id="setStartBtn" disabled>現在位置を開始に設定</button>
+        <button id="setEndBtn" disabled>現在位置を終了に設定</button>
+        <button id="fullRangeBtn" disabled>全体に戻す</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>リピート</h2>
+      <label for="repeatMode">モード</label>
+      <select id="repeatMode">
+        <option value="off">オフ</option>
+        <option value="list">リストリピート</option>
+        <option value="one">1曲リピート</option>
+        <option value="last-one">末尾のみ1曲リピート</option>
+      </select>
+    </section>
+
+    <section class="panel">
+      <h2>保存・読み込み</h2>
+      <div class="toolbar wrap">
+        <button id="saveLocalBtn">ローカルに保存</button>
+        <button id="loadLocalBtn">ローカルから読み込み</button>
+        <button id="exportZipBtn">プレイリストをZIP保存</button>
+        <input id="importZipInput" type="file" accept=".zip,application/zip" hidden>
+        <button id="importZipBtn">ZIPから読み込み</button>
+        <button id="clearLocalBtn">ローカルデータ削除</button>
+      </div>
+      <p class="muted">ZIPには playlist.json と、プレイリスト内で使用している音声ファイルを同梱します。同じファイルを複数回使っていても1回だけ格納します。</p>
+      <p id="status" class="status" role="status"></p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
