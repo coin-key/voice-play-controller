@@ -16,6 +16,7 @@
         <input id="fileInput" type="file" accept="audio/mpeg,audio/wav,audio/x-wav,audio/aac,audio/mp4,audio/x-m4a,.mp3,.wav,.aac,.m4a" multiple hidden>
         <button id="addFilesBtn">音声ファイル追加</button>
         <button id="removeTrackBtn" disabled>選択曲を削除</button>
+        <button id="duplicateTrackBtn" disabled>選択曲を複製</button>
         <button id="moveUpBtn" disabled>↑</button>
         <button id="moveDownBtn" disabled>↓</button>
       </div>
@@ -78,14 +79,27 @@
     </section>
 
     <section class="panel">
-      <h2>リピート</h2>
-      <label for="repeatMode">モード</label>
-      <select id="repeatMode">
-        <option value="off">オフ</option>
-        <option value="list">リストリピート</option>
-        <option value="one">1曲リピート</option>
-        <option value="last-one">末尾のみ1曲リピート</option>
-      </select>
+      <h2>再生順・リピート</h2>
+      <div class="repeat-grid">
+        <label>モード
+          <select id="repeatMode">
+            <option value="off">オフ</option>
+            <option value="list">リストリピート</option>
+            <option value="loop">指定区間リピート</option>
+          </select>
+        </label>
+        <label>区間開始
+          <select id="loopStartSelect" disabled></select>
+        </label>
+        <label>区間終了
+          <select id="loopEndSelect" disabled></select>
+        </label>
+      </div>
+      <label class="check-row">
+        <input id="randomWithinLoop" type="checkbox" disabled>
+        指定区間のみランダム再生（各曲の「重み」で抽選）
+      </label>
+      <p class="muted">区間は1曲だけにすれば1曲リピートになります。ランダム再生時は、区間内の各曲の重みを合計した値を基準に次曲を毎回抽選します。</p>
     </section>
 
     <section class="panel">
